@@ -13,10 +13,13 @@ extern "C" {
 	/// </summary>
 	void gen_sine(double* arr, uint32_t len, double fin, double fs, double vpp)
 	{
+		srand(time(NULL));
+		double phase = (double)rand() / RAND_MAX * 2 * PI;
+
 		int random_num = 0;
 		for (uint32_t i = 0; i < len; i++)
 		{
-			arr[i] = vpp / 2.0 * sin(2.0 * PI * fin * ((double)i / fs));
+			arr[i] = vpp / 2.0 * sin(2.0 * PI * fin * ((double)i / fs + phase));
 		}
 	}
 
@@ -60,5 +63,5 @@ extern "C" {
 	}
 
 #ifdef __cplusplus
-	}
+}
 #endif
