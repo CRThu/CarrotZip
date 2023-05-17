@@ -11,6 +11,11 @@ extern "C" {
 	/// <summary>
 	/// 理想正弦波生成
 	/// </summary>
+	/// <param name="arr"></param>
+	/// <param name="len"></param>
+	/// <param name="fin"></param>
+	/// <param name="fs"></param>
+	/// <param name="vpp"></param>
 	void gen_sine(double* arr, uint32_t len, double fin, double fs, double vpp)
 	{
 		srand(time(NULL));
@@ -26,6 +31,12 @@ extern "C" {
 	/// <summary>
 	/// 理想adc转换
 	/// </summary>
+	/// <param name="arr_out"></param>
+	/// <param name="arr_in"></param>
+	/// <param name="len"></param>
+	/// <param name="adc_bits"></param>
+	/// <param name="FS"></param>
+	/// <param name="noise_range"></param>
 	void adc(uint32_t* arr_out, double* arr_in, uint32_t len, uint32_t adc_bits, double FS, double noise_range)
 	{
 		uint32_t adc_codes = 1 << adc_bits;
@@ -51,6 +62,9 @@ extern "C" {
 	/// <summary>
 	/// 生成噪声（此处为随机数，非高斯白噪声）
 	/// </summary>
+	/// <param name="arr"></param>
+	/// <param name="len"></param>
+	/// <param name="range"></param>
 	void noise(double* arr, uint32_t len, double range)
 	{
 		srand(time(NULL));

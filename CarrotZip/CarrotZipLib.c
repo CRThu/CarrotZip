@@ -4,12 +4,19 @@
 extern "C" {
 #endif
 
-	void carrot_zip_init(carrot_zip_t* zip)
+	/// <summary>
+	/// 压缩参数结构体初始化
+	/// </summary>
+	/// <param name="zip"></param>
+	/// <param name="ds"></param>
+	void carrot_zip_init(carrot_zip_t* zip, uint32_t ds)
 	{
+
 		zip->z_1 = 0;
 		zip->k_1 = 0;
 		zip->dk_1 = 0;
 		zip->ds_cnt = 0;
+		zip->ds = ds;
 	}
 
 	/// <summary>

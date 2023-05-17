@@ -74,8 +74,11 @@ void sin_analysis()
 
 void compress_test()
 {
+	carrot_zip_init(&zip, SLOPE_DOWNSAMPLE);
+
 	gen_sine(sine_buf, BUF_LEN, FIN, FSAMPLE, VIN);
 	adc(sine_codes, sine_buf, BUF_LEN, ADC_BITS, FULLSCALE, NOISE_RANGE);
+
 	for (int i = 0; i < BUF_LEN; i++)
 	{
 		uint32_t sample_code = sine_codes[i];
@@ -95,7 +98,8 @@ void compress_test()
 	printf("raw data len: %llu\n", BUF_BYTES_LEN);
 	printf("compressed data len: %lu\n", comp_byte_stream_cursor);
 	printf("decompressed data len: %llu\n", (decomp_data_cursor * sizeof(uint32_t)));
-	bool is_equal = array_equal_uint32(sine_codes, decomp_data, BUF_LEN);
+	printf("compress ratio: %.3f %%\n", (float)(decomp_data_cursor * sizeof(uint32_t) / (float)comp_byte_stream_cursor * 100));
+	bool is_equal = (BUF_LEN == decomp_data_cursor) && array_equal_uint32(sine_codes, decomp_data, BUF_LEN);
 	printf("compare raw data and decompressed data: %s\n", is_equal ? "true" : "false");
 }
 

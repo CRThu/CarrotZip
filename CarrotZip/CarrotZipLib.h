@@ -12,15 +12,38 @@ extern "C" {
 	// Your code goes here
 
 	typedef struct carrot_zip_t carrot_zip_t;
+	/// <summary>
+	/// 压缩参数结构体
+	/// </summary>
+	struct carrot_zip_t
+	{
+		/// <summary>
+		/// 降采样斜率同步值
+		/// </summary>
+		uint32_t ds;
 
-	struct carrot_zip_t {
+		/// <summary>
+		/// z_n为前n个时刻的数据
+		/// </summary>
 		uint32_t z_1;
+
+		/// <summary>
+		/// k_n为前n时刻的斜率
+		/// </summary>
 		uint32_t k_1;
+
+		/// <summary>
+		/// dk_n为前n时刻的斜率变化量
+		/// </summary>
 		uint32_t dk_1;
+
+		/// <summary>
+		/// 降采样斜率同步计数器
+		/// </summary>
 		uint32_t ds_cnt;
 	};
 
-	void carrot_zip_init(carrot_zip_t* zip);
+	void carrot_zip_init(carrot_zip_t* zip, uint32_t ds);
 	void carrot_zip_stream_compression(carrot_zip_t* zip, uint32_t* data, uint8_t* buf, uint32_t offset, uint32_t* len);
 	void carrot_zip_stream_decompression(carrot_zip_t* zip, uint32_t* data, uint8_t* buf, uint32_t offset, uint32_t* len);
 
