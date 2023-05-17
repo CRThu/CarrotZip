@@ -4,15 +4,27 @@
 #include <stdio.h>
 #include "data_gen.h"
 #include "file_util.h"
+#include "array_util.h"
+#include "CarrotZipLib.h"
 
 
 #define BUF_LEN 2048
+#define BUF_BYTES_LEN (BUF_LEN * sizeof(uint32_t))
 double sine_buf[BUF_LEN];
 uint32_t sine_codes[BUF_LEN];
 int32_t codes_diff_1[BUF_LEN];
 int32_t codes_diff_2[BUF_LEN];
 int32_t codes_diff_3[BUF_LEN];
 int32_t codes_diff_4[BUF_LEN];
+
+carrot_zip_t zip;
+uint8_t comp_byte_stream[BUF_BYTES_LEN];
+uint32_t comp_byte_stream_cursor = 0;
+uint32_t comp_byte_stream_len = 0;
+uint32_t decomp_data[BUF_LEN];
+uint32_t decomp_data_cursor = 0;
+uint32_t decomp_byte_stream_len = 0;
+uint32_t decomp_byte_stream_cursor = 0;
 
 
 #define FIN 999.888
@@ -23,10 +35,13 @@ int32_t codes_diff_4[BUF_LEN];
 #define NOISE_RANGE 6
 
 // 斜率降采样率需大于 每周期波形采样点数/4以下 实现最大压缩率
-#define SLOPE_DOWNSAMPLE ((int)(((double)FSAMPLE)/((double)FIN)/4.0))
+// SLOPE_DOWNSAMPLE 32 适用于 FIN < FSAMPLE / 128 采样频率压缩
 
-int main()
+#define SLOPE_DOWNSAMPLE 32
+
+void sin_analysis()
 {
+
 	gen_sine(sine_buf, BUF_LEN, FIN, FSAMPLE, VIN);
 	adc(sine_codes, sine_buf, BUF_LEN, ADC_BITS, FULLSCALE, NOISE_RANGE);
 
@@ -55,4 +70,37 @@ int main()
 		printf("%10lu\t%10ld\t%10ld\t%10ld\t%10ld\n",
 			sine_codes[i], codes_diff_1[i], codes_diff_2[i], codes_diff_3[i], codes_diff_4[i]);
 	}
+}
+
+void compress_test()
+{
+	gen_sine(sine_buf, BUF_LEN, FIN, FSAMPLE, VIN);
+	adc(sine_codes, sine_buf, BUF_LEN, ADC_BITS, FULLSCALE, NOISE_RANGE);
+	for (int i = 0; i < BUF_LEN; i++)
+	{
+		uint32_t sample_code = sine_codes[i];
+		carrot_zip_stream_compression(&zip, &sample_code, comp_byte_stream, comp_byte_stream_cursor, &comp_byte_stream_len);
+		comp_byte_stream_cursor += comp_byte_stream_len;
+	}
+
+	while (decomp_byte_stream_cursor < comp_byte_stream_cursor)
+	{
+		uint32_t* decomp_code = &decomp_data[decomp_data_cursor];
+		carrot_zip_stream_decompression(&zip, decomp_code, comp_byte_stream, decomp_byte_stream_cursor, &decomp_byte_stream_len);
+
+		decomp_byte_stream_cursor += decomp_byte_stream_len;
+		decomp_data_cursor++;
+	}
+
+	printf("raw data len: %llu\n", BUF_BYTES_LEN);
+	printf("compressed data len: %lu\n", comp_byte_stream_cursor);
+	printf("decompressed data len: %llu\n", (decomp_data_cursor * sizeof(uint32_t)));
+	bool is_equal = array_equal_uint32(sine_codes, decomp_data, BUF_LEN);
+	printf("compare raw data and decompressed data: %s\n", is_equal ? "true" : "false");
+}
+
+int main()
+{
+	// sin_analysis();
+	compress_test();
 }

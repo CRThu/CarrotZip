@@ -127,11 +127,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="array_util.c" />
     <ClCompile Include="CarrotZip.c" />
+    <ClCompile Include="CarrotZipLib.c" />
     <ClCompile Include="data_gen.c" />
     <ClCompile Include="file_util.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="array_util.h" />
+    <ClInclude Include="CarrotZipLib.h" />
     <ClInclude Include="data_gen.h" />
     <ClInclude Include="file_util.h" />
   </ItemGroup>

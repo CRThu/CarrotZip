@@ -24,12 +24,24 @@
     <ClCompile Include="file_util.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="CarrotZipLib.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="array_util.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="data_gen.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="file_util.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CarrotZipLib.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="array_util.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
