@@ -9,7 +9,13 @@
 extern "C" {
 #endif
 
-	// Your code goes here
+	// Your code goes here  
+#define BYTE_MIN(byte1,byte2)	((byte1) < (byte2) ? (byte1) : (byte2))
+#define BYTE_MAX(byte1,byte2)	((byte1) > (byte2) ? (byte1) : (byte2))
+#define BYTE_ABS(byte)			((byte) > 0 ? (byte) : - (byte))
+#define BYTE_MASK(a, b)			(((1 << (BYTE_ABS(a - b) + 1)) - 1) << (BYTE_MIN(a, b)))
+#define BITS_GET(byte, a, b)	(((byte) >> (BYTE_MIN(a, b))) & ((1 << (BYTE_ABS(a - b) + 1)) - 1))
+#define BITS_SET(byte, a, b, value) ((byte) & ~(BYTE_MASK(a, b)) | ((value & ((1 << (BYTE_ABS(a - b) + 1)) - 1)) << (BYTE_MIN(a, b))))
 
 	typedef struct carrot_zip_t carrot_zip_t;
 	/// <summary>
@@ -41,9 +47,21 @@ extern "C" {
 		/// 降采样斜率同步计数器
 		/// </summary>
 		uint32_t ds_cnt;
+
+		/// <summary>
+		/// 临时压缩位存储
+		/// </summary>
+		uint8_t store_bits;
+
+		/// <summary>
+		/// 临时压缩位比特长度存储
+		/// </summary>
+		uint8_t store_bits_len;
 	};
 
 	void carrot_zip_init(carrot_zip_t* zip, uint32_t ds);
+	void carrot_zip_start(carrot_zip_t* zip, uint8_t* buf, uint32_t offset, uint32_t* len);
+	void carrot_zip_end(carrot_zip_t* zip, uint8_t* buf, uint32_t offset, uint32_t* len);
 	void carrot_zip_stream_compression(carrot_zip_t* zip, uint32_t* data, uint8_t* buf, uint32_t offset, uint32_t* len);
 	void carrot_zip_stream_decompression(carrot_zip_t* zip, uint32_t* data, uint8_t* buf, uint32_t offset, uint32_t* len);
 

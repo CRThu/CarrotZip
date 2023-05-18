@@ -17,6 +17,51 @@ extern "C" {
 		zip->dk_1 = 0;
 		zip->ds_cnt = 0;
 		zip->ds = ds;
+		zip->store_bits = 0;
+		zip->store_bits_len = 0;
+	}
+
+	/// <summary>
+	/// Ñ¹ËõÍ·Éú³É
+	/// </summary>
+	/// <param name="zip"></param>
+	/// <param name="buf"></param>
+	/// <param name="offset"></param>
+	/// <param name="len"></param>
+	void carrot_zip_start(carrot_zip_t* zip, uint8_t* buf, uint32_t offset, uint32_t* len)
+	{
+		buf[offset + 0] = 0xA5;
+		buf[offset + 1] = zip->ds_cnt >> 24;
+		buf[offset + 2] = zip->ds_cnt >> 16;
+		buf[offset + 3] = zip->ds_cnt >> 8;
+		buf[offset + 4] = zip->ds_cnt >> 0;
+		*len = 5;
+	}
+
+	/// <summary>
+	/// Ñ¹ËõÎ²Éú³É
+	/// </summary>
+	/// <param name="zip"></param>
+	/// <param name="buf"></param>
+	/// <param name="offset"></param>
+	/// <param name="len"></param>
+	void carrot_zip_end(carrot_zip_t* zip, uint8_t* buf, uint32_t offset, uint32_t* len)
+	{
+		if (zip->store_bits_len != 0)
+		{
+			buf[offset + 0] = zip->store_bits;
+			buf[offset + 1] = 0xFF;
+			buf[offset + 2] = 0xFF;
+			buf[offset + 3] = 0x5A;
+			*len = 4;
+		}
+		else
+		{
+			buf[offset + 0] = 0xFF;
+			buf[offset + 1] = 0xFF;
+			buf[offset + 2] = 0x5A;
+			*len = 3;
+		}
 	}
 
 	/// <summary>
@@ -29,6 +74,18 @@ extern "C" {
 	/// <param name="len"></param>
 	void carrot_zip_stream_compression(carrot_zip_t* zip, uint32_t* data, uint8_t* buf, uint32_t offset, uint32_t* len)
 	{
+		if (zip->ds < zip->ds_cnt)
+		{
+			// Îó²îÖ¡
+
+
+			zip->ds++;
+		}
+		else
+		{
+			// Ô¤²âÖ¡
+			zip->ds = 0;
+		}
 		for (uint8_t i = 0; i < 4; i++)
 		{
 			buf[offset + i] = (*data >> (i * 8)) & 0xFF;
@@ -55,5 +112,5 @@ extern "C" {
 	}
 
 #ifdef __cplusplus
-}
+	}
 #endif

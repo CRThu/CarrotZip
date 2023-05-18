@@ -18,7 +18,7 @@ int32_t codes_diff_3[BUF_LEN];
 int32_t codes_diff_4[BUF_LEN];
 
 carrot_zip_t zip;
-uint8_t comp_byte_stream[BUF_BYTES_LEN];
+uint8_t comp_byte_stream[BUF_BYTES_LEN * 2];
 uint32_t comp_byte_stream_cursor = 0;
 uint32_t comp_byte_stream_len = 0;
 uint32_t decomp_data[BUF_LEN];
@@ -79,12 +79,18 @@ void compress_test()
 	gen_sine(sine_buf, BUF_LEN, FIN, FSAMPLE, VIN);
 	adc(sine_codes, sine_buf, BUF_LEN, ADC_BITS, FULLSCALE, NOISE_RANGE);
 
+	carrot_zip_start(&zip, comp_byte_stream, comp_byte_stream_cursor, &comp_byte_stream_len);
+	comp_byte_stream_cursor += comp_byte_stream_len;
+
 	for (int i = 0; i < BUF_LEN; i++)
 	{
 		uint32_t sample_code = sine_codes[i];
 		carrot_zip_stream_compression(&zip, &sample_code, comp_byte_stream, comp_byte_stream_cursor, &comp_byte_stream_len);
 		comp_byte_stream_cursor += comp_byte_stream_len;
 	}
+
+	carrot_zip_end(&zip, comp_byte_stream, comp_byte_stream_cursor, &comp_byte_stream_len);
+	comp_byte_stream_cursor += comp_byte_stream_len;
 
 	while (decomp_byte_stream_cursor < comp_byte_stream_cursor)
 	{
