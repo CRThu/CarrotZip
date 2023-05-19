@@ -12,6 +12,15 @@ extern "C" {
         vprintf(format, args);
         va_end(args);
     }
+
+    void carrot_zip_buf_info(uint8_t* buf, uint32_t offset, uint32_t* len)
+    {
+        for (uint32_t i = 0; i < *len; i++)
+        {
+            carrot_zip_info("%02X ", buf[offset + i]);
+        }
+        carrot_zip_info("\n");
+    }
 #endif // _DEBUG
 
 
@@ -20,7 +29,7 @@ extern "C" {
     /// </summary>
     /// <param name="zip"></param>
     /// <param name="ds"></param>
-    void carrot_zip_init(carrot_zip_t* zip, uint32_t ds)
+    void carrot_zip_init(carrot_zip_t* zip, uint16_t ds)
     {
         zip->state = 0;
         zip->z_1 = 0;
@@ -28,6 +37,7 @@ extern "C" {
         zip->dk_1 = 0;
         zip->ds_cnt = ds;
         zip->ds = ds;
+        zip->err_width = 8;
         zip->store_bits = 0;
         zip->store_bits_len = 0;
     }
@@ -42,9 +52,9 @@ extern "C" {
     void carrot_zip_start(carrot_zip_t* zip, uint8_t* buf, uint32_t offset, uint32_t* len)
     {
         zip->state = 1;
-        buf[offset + 0] = 0xA5;
-        buf[offset + 1] = zip->ds_cnt >> 24;
-        buf[offset + 2] = zip->ds_cnt >> 16;
+        buf[offset + 0] = CARROT_ZIP_CTL_START;
+        buf[offset + 1] = 0x00;
+        buf[offset + 2] = 0x00;
         buf[offset + 3] = zip->ds_cnt >> 8;
         buf[offset + 4] = zip->ds_cnt >> 0;
         *len = 5;
@@ -62,16 +72,16 @@ extern "C" {
         if (zip->store_bits_len != 0)
         {
             buf[offset + 0] = zip->store_bits;
-            buf[offset + 1] = 0xFF;
-            buf[offset + 2] = 0xFF;
-            buf[offset + 3] = 0x5A;
+            buf[offset + 1] = CARROT_ZIP_CTL_START;
+            buf[offset + 2] = CARROT_ZIP_CTL_TAIL;
+            buf[offset + 3] = CARROT_ZIP_END_BYTE;
             *len = 4;
         }
         else
         {
-            buf[offset + 0] = 0xFF;
-            buf[offset + 1] = 0xFF;
-            buf[offset + 2] = 0x5A;
+            buf[offset + 0] = CARROT_ZIP_CTL_START;
+            buf[offset + 1] = CARROT_ZIP_CTL_TAIL;
+            buf[offset + 2] = CARROT_ZIP_END_BYTE;
             *len = 3;
         }
     }
@@ -94,6 +104,21 @@ extern "C" {
             int32_t err = dk - zip->dk_1;
             carrot_zip_info("ds_cnt = %8u, Îó²îÖ¡, dat = %8u, k = %8d, dk = %8d, err = %8d\n", zip->ds_cnt, *data, k, dk, err);
 
+            uint32_t err_word = err + (1 << (zip->err_width - 1));
+            if (err_word >= ((1 << zip->err_width) - 1))
+            {
+                zip->err_width += 8;
+                buf[offset + 0] = CARROT_ZIP_CTL_START;
+                buf[offset + 1] = CARROT_ZIP_CTL_CHANGE_Z_WIDTH(zip->err_width);
+                *len = 2;
+                for (int i = (zip->err_width >> 3) - 1; i >= 0; i--)
+                {
+                    buf[offset + *len] = err >> (i << 3);
+                    *len = *len + 1;
+                }
+                carrot_zip_buf_info(buf, offset, len);
+            }
+
             // Ñ¹ËõÐÅÏ¢¸üÐÂ
             zip->z_1 = *data;
             zip->k_1 = k;
@@ -109,6 +134,15 @@ extern "C" {
                 zip->state = 2;
                 zip->z_1 = *data;
                 carrot_zip_info("ds_cnt = %8u, Ô¤²âÖ¡, dat = %8u\n", zip->ds_cnt, *data);
+
+                buf[offset + 0] = CARROT_ZIP_CTL_START;
+                buf[offset + 1] = CARROT_ZIP_CTL_CHANGE_Z_WIDTH(32);
+                buf[offset + 2] = zip->z_1 >> 24;
+                buf[offset + 3] = zip->z_1 >> 16;
+                buf[offset + 4] = zip->z_1 >> 8;
+                buf[offset + 5] = zip->z_1 >> 0;
+                *len = 6;
+                carrot_zip_buf_info(buf, offset, len);
             }
             else if (zip->state == 2)
             {
@@ -116,6 +150,15 @@ extern "C" {
                 zip->k_1 = *data - zip->z_1;
                 zip->z_1 = *data;
                 carrot_zip_info("ds_cnt = %8u, Ô¤²âÖ¡, dat = %8u, k = %8d\n", zip->ds_cnt, *data, zip->k_1);
+
+                buf[offset + 0] = CARROT_ZIP_CTL_START;
+                buf[offset + 1] = CARROT_ZIP_CTL_CHANGE_K_WIDTH(32);
+                buf[offset + 2] = zip->k_1 >> 24;
+                buf[offset + 3] = zip->k_1 >> 16;
+                buf[offset + 4] = zip->k_1 >> 8;
+                buf[offset + 5] = zip->k_1 >> 0;
+                *len = 6;
+                carrot_zip_buf_info(buf, offset, len);
             }
             else if (zip->state == 3)
             {
@@ -125,6 +168,15 @@ extern "C" {
                 zip->z_1 = *data;
                 carrot_zip_info("ds_cnt = %8u, Ô¤²âÖ¡, dat = %8u, k = %8d, dk = %8d\n", zip->ds_cnt, *data, zip->k_1, zip->dk_1);
                 zip->ds_cnt = 0;
+
+                buf[offset + 0] = CARROT_ZIP_CTL_START;
+                buf[offset + 1] = CARROT_ZIP_CTL_CHANGE_DK_WIDTH(32);
+                buf[offset + 2] = zip->dk_1 >> 24;
+                buf[offset + 3] = zip->dk_1 >> 16;
+                buf[offset + 4] = zip->dk_1 >> 8;
+                buf[offset + 5] = zip->dk_1 >> 0;
+                *len = 6;
+                carrot_zip_buf_info(buf, offset, len);
             }
             else if (zip->state == 4)
             {
@@ -133,6 +185,15 @@ extern "C" {
                 zip->z_1 = *data;
                 carrot_zip_info("ds_cnt = %8u, Ô¤²âÖ¡, dat = %8u, k = %8d, dk = %8d\n", zip->ds_cnt, *data, zip->k_1, zip->dk_1);
                 zip->ds_cnt = 0;
+
+                buf[offset + 0] = CARROT_ZIP_CTL_START;
+                buf[offset + 1] = CARROT_ZIP_CTL_CHANGE_DK_WIDTH(32);
+                buf[offset + 2] = zip->dk_1 >> 24;
+                buf[offset + 3] = zip->dk_1 >> 16;
+                buf[offset + 4] = zip->dk_1 >> 8;
+                buf[offset + 5] = zip->dk_1 >> 0;
+                *len = 6;
+                carrot_zip_buf_info(buf, offset, len);
             }
 
             /*  for (uint8_t i = 0; i < 4; i++)

@@ -46,8 +46,8 @@ void sin_analysis()
     gen_sine(sine_buf, BUF_LEN, FIN, FSAMPLE, VIN);
     adc(sine_codes, sine_buf, BUF_LEN, ADC_BITS, FULLSCALE, NOISE_RANGE);
 
-    //save_double_arr("arr.txt", sine_buf, BUF_LEN);
-    save_uint32_arr("codes.txt", sine_codes, BUF_LEN);
+    // save_double_arr("arr.txt", sine_buf, BUF_LEN);
+    // save_uint32_arr("codes.txt", sine_codes, BUF_LEN);
 
     // codes_diff_1 为2code之间差值
     // codes_diff_2 为2code之间斜率
@@ -117,6 +117,8 @@ int main()
     for (uint32_t i = 0; i < BUF_LEN; i++)
     {
         sine_codes[i] = (uint32_t)pow(i, 3.2);
+        if (i > 6)
+            sine_codes[i] += 6000;
     }
     compress_test();
 }
